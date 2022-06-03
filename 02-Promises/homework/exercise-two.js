@@ -51,6 +51,17 @@ function problemA () {
 
   // promise version
   // ???
+  Promise.all([
+    promisifiedReadFile('poem-two/stanza-01.txt'),
+    promisifiedReadFile('poem-two/stanza-02.txt')
+  ])// el promise. all devulvc un arreglo con las promesas resueltas
+  .then(stanzas => {
+    blue(stanzas[0]);
+    blue(stanzas[1])
+  })
+  .finally(()=> {
+    console.log('done');
+  })
 
 }
 
@@ -84,6 +95,16 @@ function problemB () {
 
   // promise version
   // ???
+  const promesas = filenames.map(elem => {
+    promisifiedReadFile(elem)
+  })
+  Promise.all(promesas)
+  .then(stanzas => {
+    stanzas.forEach(elem => blue(elem))
+  })
+  .finally(()=> {
+    console.log('done');
+  })
 
 }
 
@@ -118,6 +139,21 @@ function problemC () {
 
   // promise version
   // ???
+  for (let index = 0,
+    aux = promisifiedReadFile(filenames[0]);
+   index < filenames.length;
+   index++) {
+   aux = aux
+   .then(stanza => {
+     blue(stanza);
+     if (i === filenames.length) {
+       console.log(done);
+     } else {
+       return promisifiedReadFile(filenames[i])
+     }
+   })
+   
+ }
 
 }
 
@@ -156,6 +192,18 @@ function problemD () {
 
   // promise version
   // ???
+  for (let index = 0,
+     aux = promisifiedReadFile(filenames[0]);
+    index < filenames.length;
+    index++) {
+      if (i === filenames.length) {
+        aux 
+        .catch(err => {
+          magenta(new Error(err));
+          console.log('done');
+        })
+      } 
+  }
 
 }
 
