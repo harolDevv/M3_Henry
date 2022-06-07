@@ -33,6 +33,8 @@ $Promise.prototype._internalReject = function(data){
 
 $Promise.prototype.then = function(sH,eH){
 
+    let nuevaPromise = new $Promise(function(){})
+
     if (typeof sH !== 'function') {
         sH = null
     }
@@ -42,11 +44,13 @@ $Promise.prototype.then = function(sH,eH){
     this._handlerGroups.push({
         successCb: sH,
         errorCb: eH,
+        downstreamPromise: nuevaPromise,
     })
 
     if (this._state !== 'pending') {
         this._callHandlers();
     }
+    return nuevaPromise
 }
 
 
@@ -56,11 +60,60 @@ $Promise.prototype._callHandlers = function (){
 
         if (this._state === 'fulfilled') {
             //si existe ejecutalo 
-            aux.successCb && aux.successCb(this._value)
-        }else {
-            aux.errorCb && aux.errorCb(this._value)
+            if(!aux.successCb){
+                downstreamPromise._internalResolve(this._value)
+            }else{
+                try {
+
+                    let result = aux.successCb(this._value)
+                    if (result instanceof $Promise) {
+                        result.then(
+                            function (value) {
+                                downstreamPromise._internalResolve(value)
+                            },
+                            function (err) {
+                                downstreamPromise._internalReject(err)
+                            }
+                        );
+                    } else {
+                        downstreamPromise._internalResolve(result)
+                    }
+
+                } catch (error) {
+                    //recahazar la promesa
+                    downstreamPromise._internalReject(error)
+                }
+                
+            } 
+        }else {///Rejectr
+            if (!aux.errorCb) {
+                downstreamPromise._internalReject(this._value)
+            } else {
+                try {
+                    let result =aux.errorCb(this._value);
+                    if (result instanceof $Promise) {
+                        result.then(
+                            function (value) {
+                                downstreamPromise._internalResolve(value)
+                            },
+                            function (err) {
+                                downstreamPromise._internalReject(err)
+                            }
+                        );
+                    } else{
+                        downstreamPromise._internalResolve(result)
+                    }
+                    
+                } catch (error) {
+                    downstreamPromise._internalReject(error)
+                }
+            }
         }
     }
+}
+
+$Promise.prototype.catch = function(errorCb){
+    return this.then(null, errorCb)
 }
 
 
